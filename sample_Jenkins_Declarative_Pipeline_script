@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('git clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/parameswar-patra/Terraform_CICD.git'
+            }
+        }
+        stage('terraform init') {
+            steps {
+                dir('Day-10-userdata') {
+                sh 'terraform init'
+                }
+            }
+        }
+        stage('terraform plan') {
+            steps {
+                dir('Day-10-userdata') {
+                sh 'terraform plan'
+                }
+            }
+        }
+        stage('terraform apply/destroy') {
+            steps {
+                dir('Day-10-userdata') {
+                sh 'terraform ${dev} -auto-approve'
+                echo 'completed succesfully'
+                }
+            }
+        }  
+    }
+}
