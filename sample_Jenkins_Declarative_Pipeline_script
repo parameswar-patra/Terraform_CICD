@@ -25,7 +25,7 @@ pipeline {
             steps {
                 dir('Day-10-userdata') {
                 sh 'terraform ${dev} -auto-approve'
-                echo 'completed succesfully'
+                echo 'completed successfully'
                 }
             }
         }  
