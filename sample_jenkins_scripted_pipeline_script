@@ -1,0 +1,24 @@
+node {
+    stage('Git Clone') {
+        git branch: 'main', url: 'https://github.com/parameswar-patra/Terraform_CICD.git'
+    }
+
+    stage('Terraform Init') {
+        dir('Day-10-userdata') {
+            sh 'terraform init'
+        }
+    }
+
+    stage('Terraform Plan') {
+        dir('Day-10-userdata') {
+            sh 'terraform plan'
+        }
+    }
+
+    stage('Terraform Apply/Destroy') {
+        dir('Day-10-userdata') {
+            sh "terraform ${dev} -auto-approve"
+            echo 'Completed successfully'
+        }
+    }
+}
