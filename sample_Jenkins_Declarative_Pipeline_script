@@ -1,33 +1,76 @@
 pipeline {
     agent any
 
-    stages {
-        stage('git clone') {
-            steps {
-                git branch: 'main', url: 'https://github.com/parameswar-patra/Terraform_CICD.git'
-            }
-        }
-        stage('terraform init') {
-            steps {
-                dir('Day-10-userdata') {
-                sh 'terraform init'
-                }
-            }
-        }
-        stage('terraform plan') {
-            steps {
-                dir('Day-10-userdata') {
-                sh 'terraform plan'
-                }
-            }
-        }
-        stage('terraform apply/destroy') {
-            steps {
-                dir('Day-10-userdata') {
-                sh 'terraform ${dev} -auto-approve'
-                echo 'completed successfully'
-                }
-            }
-        }  
+    parameters {
+        choice(
+            name: 'ACTION',
+            choices: ['apply', 'destroy'],
+            description: 'Choose Terraform action'
+        )
     }
+
+    environment {
+        TF_DIR = 'userdata'
+    }
+
+    stages {
+
+        stage('Git Clone') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/parameswar-patra/Terraform_CICD.git'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                dir("${TF_DIR}") {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                dir("${TF_DIR}") {
+                    sh 'terraform plan'
+                }
+            }
+        }
+
+        stage('Approve Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                input message: 'Are you sure you want to destroy the infrastructure?'
+            }
+        }
+
+        stage('Terraform Apply / Destroy') {
+            steps {
+                dir("${TF_DIR}") {
+                    sh "terraform ${params.ACTION} -auto-approve"
+                    echo "Terraform ${params.ACTION} completed successfully"
+                }
+            }
+        }
+
+    } // end of stages
+
+    post {
+        success {
+            echo "Pipeline completed successfully"
+        }
+        failure {
+            echo "Pipeline failed"
+        }
+        always {
+            echo "Pipeline execution finished"
+        }
+    }
+
 }

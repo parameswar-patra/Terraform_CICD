@@ -1,24 +1,63 @@
 node {
-    stage('Git Clone') {
-        git branch: 'main', url: 'https://github.com/parameswar-patra/Terraform_CICD.git'
-    }
 
-    stage('Terraform Init') {
-        dir('Day-10-userdata') {
-            sh 'terraform init'
-        }
-    }
+    // Choice parameter
+    properties([
+        parameters([
+            choice(
+                name: 'ACTION',
+                choices: ['apply', 'destroy'],
+                description: 'Choose Terraform action'
+            )
+        ])
+    ])
 
-    stage('Terraform Plan') {
-        dir('Day-10-userdata') {
-            sh 'terraform plan'
-        }
-    }
+    // Environment variable
+    def TF_DIR = 'userdata'
 
-    stage('Terraform Apply/Destroy') {
-        dir('Day-10-userdata') {
-            sh "terraform ${dev} -auto-approve"
-            echo 'Completed successfully'
+    try {
+
+        stage('Git Clone') {
+            git branch: 'main',
+                url: 'https://github.com/parameswar-patra/Terraform_CICD.git'
         }
+
+        stage('Terraform Init') {
+            dir(TF_DIR) {
+                sh 'terraform init'
+            }
+        }
+
+        if (params.ACTION == 'apply') {
+            stage('Terraform Plan') {
+                dir(TF_DIR) {
+                    sh 'terraform plan'
+                }
+            }
+        }
+
+        if (params.ACTION == 'destroy') {
+            stage('Approve Destroy') {
+                input message: 'Are you sure you want to destroy the infrastructure?'
+            }
+        }
+
+        stage('Terraform Apply / Destroy') {
+            dir(TF_DIR) {
+                sh "terraform ${params.ACTION} -auto-approve"
+                echo "Terraform ${params.ACTION} completed successfully"
+            }
+        }
+
+        echo "Pipeline completed successfully"
+
+    } catch (err) {
+
+        echo "Pipeline failed"
+        throw err
+
+    } finally {
+
+        echo "Pipeline execution finished"
+
     }
 }
